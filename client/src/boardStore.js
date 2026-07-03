@@ -1,13 +1,19 @@
+let clientId = null;
 let board = [];
 let isGameEnd = false;
 let listeners = [];
-let snapshot = { board, isGameEnd }
+let snapshot = { clientId, board, isGameEnd }
 
 const boardStore = {
+    updateClientId(newId) {
+        clientId = newId
+        snapshot = { clientId, board, isGameEnd }
+        emitChange()
+    },
     loadBoard(newBoard, bool) {
         board = [...newBoard]
         isGameEnd = bool
-        snapshot = { board, isGameEnd }
+        snapshot = { clientId, board, isGameEnd }
         emitChange()
     },
     subscribe(listener) {

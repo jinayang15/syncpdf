@@ -16,6 +16,10 @@ server.on('connection', (socket) => {
         const msg = JSON.parse(message);
 
         switch (msg.type) {
+            case "create-new-client": {
+                const clientId = crypto.randomUUID();
+                socket.send(JSON.stringify({ type: "new-client-created", clientId }))
+            }
             case "create-room": {
                 const roomId = crypto.randomUUID();
                 rooms.set(roomId, {
@@ -40,6 +44,7 @@ server.on('connection', (socket) => {
                     return;
                 }
                 rooms.get(roomId).clients.set(socket, { name: clientName, history: [] })
+                socket.send(JSON.stringify({ type: "" }))
                 break
             }
             case "start-game": {

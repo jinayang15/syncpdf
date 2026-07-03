@@ -42,8 +42,15 @@ function connect() {
         isAwaitingServerStore.setIsAwaitingServer(false);
         console.log(e.data)
         const message = JSON.parse(e.data)
-        if (message.type === "board-update") {
-            boardStore.loadBoard(message.board, message.isGameEnd)
+        switch (message.type) {
+            case "new-client-created": {
+                boardStore.updateClientId(message.clientId)
+                break;
+            }
+            case "board-update": {
+                boardStore.loadBoard(message.board, message.isGameEnd)
+                break;
+            }
         }
     })
 }
@@ -55,6 +62,11 @@ function sendSet(cards) {
     ws.send(JSON.stringify({ "type": "board-update", "cards": cards }))
 }
 
-export { connect, sendSet, isAwaitingServerStore }
+function createNewClient() {
+    if (boardStore.clientId) return boardStore.clientId;
+    ws.send(JSON.stringify({ "type": "create-new-client" }))
+}
+
+export { connect, sendSet, createNewClient, isAwaitingServerStore }
 
 
