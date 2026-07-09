@@ -31,50 +31,61 @@ server.on('connection', (socket) => {
                 break
             }
             case "join-room": {
+                const clientId = msg.clientId;
                 const roomId = msg.roomId;
-                const clientName = msg.name?.trim();
-                if (!roomId || !rooms[roomId]) {
+                // const clientName = msg.name?.trim();
+                if (!clientId) {
+                    socket.send(JSON.stringify({ type: "error", message: "Need to specify client" }));
+                    socket.close();
+                    return;
+                }
+                if (!roomId || !rooms.has(roomId)) {
                     socket.send(JSON.stringify({ type: "error", message: "Room not found" }));
                     socket.close();
                     return;
                 }
-                if (!clientName) {
-                    socket.send(JSON.stringify({ type: "error", message: "Client name not found" }));
-                    socket.close();
-                    return;
-                }
-                rooms.get(roomId).clients.set(socket, { name: clientName, history: [] })
+                // if (!clientName) {
+                //     socket.send(JSON.stringify({ type: "error", message: "Client name not found" }));
+                //     socket.close();
+                //     return;
+                // }
+                // rooms.get(roomId).clients.set(socket, { name: clientName, history: [] })
+                rooms.get(roomId).clients.set(clientId, { name: clientId })
                 socket.send(JSON.stringify({ type: "" }))
                 break
             }
             case "start-game": {
-                const roomId = msg.roomId;
-                if (!roomId || !rooms.has(roomId)) {
+                const clientId = msg.clientId;
+                const roomId = getClientRoom(clientId);
+                if (!clientId) {
+                    socket.send(JSON.stringify({ type: "error", message: "Need to specify client" }));
+                    socket.close();
+                    return;
+                }
+                if (!room) {
                     sendErrorMsg(socket, "Room not found")
                     return;
                 }
-                const room = rooms.get(roomId)
                 room.board, room.remainingDeck = generateBoard(room.board, room.remainingDeck)
                 socket.send(JSON.stringify({ type: "board-update", board: room.board, isGameEnd: false }))
                 break;
             }
             case "message": {
                 const action = msg.action;
-                const roomId = msg.roomId;
-                const clientName = msg.name?.trim();
+                const clientId = msg.clientId;
+                const room = getClientRoom(clientId);
                 if (!action) {
                     sendErrorMsg(socket, "Need to specify action with message")
                     return;
                 }
-                if (!roomId || !rooms.has(roomId)) {
+                if (!clientId) {
+                    sendErrorMsg(socket, "Client not found")
+                    return;
+                }
+                if (!room) {
                     sendErrorMsg(socket, "Room not found")
                     return;
                 }
-                if (!clientName) {
-                    sendErrorMsg(socket, "Client name not found")
-                    return;
-                }
-                const room = rooms.get(roomId);
 
                 switch (msg.action) {
                     case "board-update": {
@@ -105,6 +116,13 @@ server.on('connection', (socket) => {
         console.log('Client disconnected');
     });
 })
+
+function getClientRoom(clientId) {
+    for (const room of rooms.values()) {
+        if (room.clients.has(clientId)) return room;
+    }
+    return null
+}
 
 function generateBoard(board, remainingDeck) {
     do {
@@ -143,3 +161,5 @@ function sendErrorMsg(socket, message) {
     socket.close();
 }
 console.log('WebSocket server is running on', wsUri)
+
+// TODO: Create an HTTP server to allow calls for joinable rooms

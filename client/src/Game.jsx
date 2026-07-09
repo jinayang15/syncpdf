@@ -6,10 +6,11 @@ import Card from './Card';
 import cardImages from "./images.js"
 
 // TODO: Add new screens and follow new server.js implementation
-function Game(clientId) {
+function Game() {
     const boardState = useSyncExternalStore(boardStore.subscribe, boardStore.getSnapshot);
     const [selectedCards, setSelectedCards] = useState([]);
     const isAwaitingServerState = useSyncExternalStore(isAwaitingServerStore.subscribe, isAwaitingServerStore.getSnapshot);
+    const clientId = boardStore.clientId;
 
     useEffect(() => {
         connect();
@@ -25,7 +26,7 @@ function Game(clientId) {
             setSelectedCards([])
         } else if (selectedCards.length === 2) {
             setSelectedCards(prev => [...prev, val])
-            sendSet([...selectedCards, val])
+            sendSet(clientId, [...selectedCards, val])
         } else {
             setSelectedCards(prev => [...prev, val])
         }

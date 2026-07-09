@@ -55,11 +55,11 @@ function connect() {
     })
 }
 
-function sendSet(cards) {
+function sendSet(clientId, cards) {
     if (cards.length !== 3) throw new Error("Incorrect number of cards")
 
     isAwaitingServerStore.setIsAwaitingServer(true);
-    ws.send(JSON.stringify({ "type": "board-update", "cards": cards }))
+    ws.send(JSON.stringify({ "clientId": clientId, "type": "message", "action": "board-update", "cards": cards }))
 }
 
 function createNewClient() {

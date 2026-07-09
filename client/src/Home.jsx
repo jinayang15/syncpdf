@@ -4,12 +4,14 @@ function Home() {
 
     function createGame() {
 
+
     }
 
     function joinGame(roomId) {
 
     }
 
+    // TODO: Display joinable lobbies
     return (
         <>
             <div>
