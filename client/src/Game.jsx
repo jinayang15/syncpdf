@@ -14,7 +14,7 @@ function Game() {
 
     useEffect(() => {
         connect();
-    }, [])
+    }, []);
 
     if (!isAwaitingServerState && selectedCards.length === 3) setSelectedCards([])
 

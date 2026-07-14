@@ -53,6 +53,10 @@ function connect() {
             }
         }
     })
+
+    ws.addEventListener("close", () => {
+        connected = false;
+    })
 }
 
 function sendSet(clientId, cards) {
@@ -65,6 +69,15 @@ function sendSet(clientId, cards) {
 function createNewClient() {
     if (boardStore.clientId) return boardStore.clientId;
     ws.send(JSON.stringify({ "type": "create-new-client" }))
+}
+
+function createGame() {
+
+
+}
+
+function joinGame(roomId) {
+    ws.send(JSON.stringify({ "type": "join-game", "roomId": roomId, "clientId": boardStore.clientId }))
 }
 
 export { connect, sendSet, createNewClient, isAwaitingServerStore }
