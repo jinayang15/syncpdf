@@ -21,12 +21,20 @@ server.on('connection', (socket) => {
                 socket.send(JSON.stringify({ type: "new-client-created", clientId }))
             }
             case "create-room": {
+                const clientId = msg.clientId;
+                if (!clientId) {
+                    socket.send(JSON.stringify({ type: "error", message: "Need to specify client" }));
+                    socket.close();
+                    return;
+                }
                 const roomId = crypto.randomUUID();
                 rooms.set(roomId, {
                     board: [],
                     remainingDeck: [],
                     clients: new Map()
                 })
+                rooms.get(roomId).clients.set(clientId, { name: clientId })
+                console.log("room-created", roomId);
                 socket.send(JSON.stringify({ type: "room-created", roomId }))
                 break
             }
@@ -56,7 +64,7 @@ server.on('connection', (socket) => {
             }
             case "start-game": {
                 const clientId = msg.clientId;
-                const roomId = getClientRoom(clientId);
+                const room = getClientRoom(clientId);
                 if (!clientId) {
                     socket.send(JSON.stringify({ type: "error", message: "Need to specify client" }));
                     socket.close();
@@ -66,13 +74,14 @@ server.on('connection', (socket) => {
                     sendErrorMsg(socket, "Room not found")
                     return;
                 }
-                room.board, room.remainingDeck = generateBoard(room.board, room.remainingDeck)
+                [room.board, room.remainingDeck] = generateBoard(room.board, room.remainingDeck)
                 socket.send(JSON.stringify({ type: "board-update", board: room.board, isGameEnd: false }))
                 break;
             }
             case "message": {
                 const action = msg.action;
                 const clientId = msg.clientId;
+                console.log(Array.from(rooms.keys()))
                 const room = getClientRoom(clientId);
                 if (!action) {
                     sendErrorMsg(socket, "Need to specify action with message")
@@ -139,7 +148,7 @@ function updateBoard(board, remainingDeck, selectedCards) {
     if (selectedCards.length === 3 && validation.checkSet(...selectedCards)) {
         for (let i = 0; i < board.length; i++) {
             if (selectedCards.includes(board[i])) {
-                if (remainingDeck.length > 0) {
+                if (board.length < BOARD_START_SIZE && remainingDeck.length > 0) {
                     board[i] = remainingDeck.pop();
                 } else {
                     board.splice(i, 1);

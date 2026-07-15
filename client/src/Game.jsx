@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import './Game.css'
-import { connect, isAwaitingServerStore, sendSet } from './connect'
+import { connect, isAwaitingServerStore, sendSet, startGame } from './connect'
 import boardStore from './boardStore.js';
 import Card from './Card';
 import cardImages from "./images.js"
@@ -10,10 +10,10 @@ function Game() {
     const boardState = useSyncExternalStore(boardStore.subscribe, boardStore.getSnapshot);
     const [selectedCards, setSelectedCards] = useState([]);
     const isAwaitingServerState = useSyncExternalStore(isAwaitingServerStore.subscribe, isAwaitingServerStore.getSnapshot);
-    const clientId = boardStore.clientId;
 
     useEffect(() => {
         connect();
+        startGame();
     }, []);
 
     if (!isAwaitingServerState && selectedCards.length === 3) setSelectedCards([])
@@ -26,7 +26,7 @@ function Game() {
             setSelectedCards([])
         } else if (selectedCards.length === 2) {
             setSelectedCards(prev => [...prev, val])
-            sendSet(clientId, [...selectedCards, val])
+            sendSet([...selectedCards, val])
         } else {
             setSelectedCards(prev => [...prev, val])
         }
