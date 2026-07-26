@@ -1,19 +1,12 @@
-let clientId = "aaa";
 let roomId = null;
 let listeners = [];
-let snapshot = { clientId, roomId }
+let snapshot = { roomId }
 
 const lobbyStore = {
-    get clientId() { return clientId; },
     get roomId() { return roomId; },
-    updateClientId(newId) {
-        clientId = newId
-        snapshot = { clientId, roomId }
-        emitChange()
-    },
     updateRoomId(newId) {
         roomId = newId
-        snapshot = { clientId, roomId }
+        snapshot = { roomId }
         emitChange()
     },
     subscribe(listener) {

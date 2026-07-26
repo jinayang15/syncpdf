@@ -1,3 +1,6 @@
-export default function ListGame(joinGame, roomId) {
-    return <div class="list-game" onClick={() => joinGame(roomId)}>{roomId}</div>
+
+import { joinGame } from "./connect"
+
+export default function ListGame({ roomId }) {
+    return <button className="list-game" onClick={() => joinGame(roomId)}>{roomId}</button>
 }

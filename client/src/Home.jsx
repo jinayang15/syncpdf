@@ -3,16 +3,19 @@ import { createGame } from './connect';
 import './Home.css'
 import { useNavigate } from "react-router";
 import lobbyStore from './lobbyStore';
+import homeStore from './homeStore';
 import { connect } from './connect';
+import ListGame from './ListGame';
 
 function Home() {
     let navigate = useNavigate();
     const lobbyState = useSyncExternalStore(lobbyStore.subscribe, lobbyStore.getSnapshot);
+    const homeState = useSyncExternalStore(homeStore.subscribe, homeStore.getSnapshot);
     const roomId = lobbyState.roomId;
 
     useEffect(() => {
-        connect();
-    }, []);
+        connect()
+    }, [])
 
     useEffect(() => {
         if (roomId) navigate("/lobby")
@@ -21,11 +24,18 @@ function Home() {
     // TODO: Display joinable lobbies
     return (
         <>
-            <div>
-
-
-            </div>
-            <button id="create-game" type="button" onClick={() => createGame()}>Create Game</button >
+            <ul>
+                {homeState.lobbies.map((roomId) =>
+                    <li key={roomId}><ListGame roomId={roomId} /></li>
+                )}
+            </ul>
+            <button
+                id="create-game"
+                type="button"
+                onClick={() => createGame()}
+            >
+                Create Room
+            </button >
         </>
     )
 

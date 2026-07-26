@@ -1,5 +1,6 @@
 import boardStore from "./boardStore";
 import lobbyStore from "./lobbyStore";
+import homeStore from "./homeStore";
 const port = 1515
 
 let connected = false;
@@ -41,17 +42,22 @@ function connect() {
 
     ws.addEventListener("message", (e) => {
         isAwaitingServerStore.setIsAwaitingServer(false);
-        console.log(e.data)
         const message = JSON.parse(e.data)
+        console.log(message)
         switch (message.type) {
             case "new-client-created": {
-                lobbyStore.updateClientId(message.clientId)
+                homeStore.updateClientId(message.clientId)
+                break;
+            }
+            case "lobbies-list": {
+                homeStore.updateLobbies(message.lobbies)
                 break;
             }
             case "board-update": {
                 boardStore.loadBoard(message.board, message.isGameEnd)
                 break;
             }
+            case "room-joined":
             case "room-created": {
                 lobbyStore.updateRoomId(message.roomId)
                 break;
@@ -68,25 +74,25 @@ function sendSet(cards) {
     if (cards.length !== 3) throw new Error("Incorrect number of cards")
 
     isAwaitingServerStore.setIsAwaitingServer(true);
-    ws.send(JSON.stringify({ "clientId": lobbyStore.clientId, "type": "message", "action": "board-update", "cards": cards }))
+    ws.send(JSON.stringify({ "clientId": homeStore.clientId, "type": "message", "action": "board-update", "cards": cards }))
 }
 
 function createNewClient() {
-    if (lobbyStore.clientId) return lobbyStore.clientId;
+    if (homeStore.clientId) return homeStore.clientId;
     ws.send(JSON.stringify({ "type": "create-new-client" }))
 }
 
 function createGame() {
-    console.log("creating room", lobbyStore.clientId)
-    ws.send(JSON.stringify({ "type": "create-room", "clientId": lobbyStore.clientId }))
+    console.log("creating room", homeStore.clientId)
+    ws.send(JSON.stringify({ "type": "create-room", "clientId": homeStore.clientId }))
 }
 
-function joinGame() {
-    ws.send(JSON.stringify({ "type": "join-game", "roomId": lobbyStore.roomId, "clientId": lobbyStore.clientId }))
+function joinGame(roomId) {
+    ws.send(JSON.stringify({ "type": "join-room", "roomId": roomId, "clientId": homeStore.clientId }))
 }
 
 function startGame() {
-    ws.send(JSON.stringify({ type: "start-game", clientId: lobbyStore.clientId }))
+    ws.send(JSON.stringify({ type: "start-game", clientId: homeStore.clientId }))
 }
 
 export { isAwaitingServerStore, connect, sendSet, createNewClient, createGame, joinGame, startGame }
