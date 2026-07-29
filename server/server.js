@@ -33,10 +33,10 @@ server.on('connection', (socket) => {
                     remainingDeck: [],
                     clients: new Map()
                 })
-                rooms.get(roomId).clients.set(clientId, { name: clientId })
+                rooms.get(roomId).clients.set(clientId, { name: clientId, socket: socket })
                 console.log("room-created", roomId);
-                socket.send(JSON.stringify({ type: "room-created", roomId }))
-                broadcastToClients({ type: "lobbies-list", lobbies: Array.from(rooms.keys()) });
+                socket.send(JSON.stringify({ type: "room-created", roomId, clients: Array.from(rooms.get(roomId).clients.keys()) }))
+                broadcastToAllClients({ type: "lobbies-list", lobbies: Array.from(rooms.keys()) });
                 break
             }
             case "join-room": {
@@ -57,8 +57,9 @@ server.on('connection', (socket) => {
                 //     return;
                 // }
                 // rooms.get(roomId).clients.set(socket, { name: clientName, history: [] })
-                rooms.get(roomId).clients.set(clientId, { name: clientId })
-                socket.send(JSON.stringify({ type: "room-joined", roomId }))
+                const room = rooms.get(roomId);
+                room.clients.set(clientId, { name: clientId, socket: socket })
+                broadcastToRoom(room, { type: "room-joined", roomId, clients: Array.from(rooms.get(roomId).clients.keys()) })
                 break
             }
             case "start-game": {
@@ -73,7 +74,7 @@ server.on('connection', (socket) => {
                     return;
                 }
                 [room.board, room.remainingDeck] = generateBoard(room.board, room.remainingDeck)
-                socket.send(JSON.stringify({ type: "board-update", board: room.board, isGameEnd: false }))
+                broadcastToRoom(room, { type: "game-started", board: room.board, isGameEnd: false })
                 break;
             }
             case "message": {
@@ -107,11 +108,11 @@ server.on('connection', (socket) => {
                         console.log(room.board.length < BOARD_START_SIZE)
                         console.log(countSets(room.board))
                         console.log("sending msg to client...")
-                        socket.send(JSON.stringify({
+                        broadcastToRoom(room, {
                             type: "board-update",
                             board: room.board,
                             isGameEnd: countSets(room.board) === 0 && room.remainingDeck.length === 0
-                        }))
+                        })
                     }
                 }
                 break
@@ -168,10 +169,19 @@ function sendErrorMsg(socket, message) {
     socket.close();
 }
 
-function broadcastToClients(payload) {
+function broadcastToAllClients(payload) {
     for (const client of server.clients) {
         if (client.readyState === WebSocket.OPEN)
-            client.send(JSON.stringify(payload))
+            client.send(JSON.stringify(payload));
     }
 }
+
+function broadcastToRoom(room, payload) {
+    const roomPlayers = room.clients
+    for (const client of roomPlayers.values()) {
+        if (client.socket.readyState === WebSocket.OPEN)
+            client.socket.send(JSON.stringify(payload));
+    }
+}
+
 console.log('WebSocket server is running on', wsUri)

@@ -53,6 +53,11 @@ function connect() {
                 homeStore.updateLobbies(message.lobbies)
                 break;
             }
+            case "game-started": {
+                lobbyStore.setGameStarted(true);
+                boardStore.loadBoard(message.board, message.isGameEnd)
+                break;
+            }
             case "board-update": {
                 boardStore.loadBoard(message.board, message.isGameEnd)
                 break;
@@ -60,6 +65,7 @@ function connect() {
             case "room-joined":
             case "room-created": {
                 lobbyStore.updateRoomId(message.roomId)
+                lobbyStore.updatePlayers(message.clients)
                 break;
             }
         }
